@@ -36,6 +36,9 @@ func Start() {
 
 	//Agents Endpoints
 	router.GET("/api/agents", apiAgents)
+	router.GET("/api/agent/:agent", apiAgent)
+	router.POST("/api/agent/update", apiAgentsUpdate)
+	router.POST("/api/agent/create", apiAgentsCreate)
 	router.GET("/agents/", redirect)
 
 	//commands Endpoints
@@ -78,6 +81,54 @@ func apiCmdUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	api.UpdateCMDStatus(ID, OUTPUT)
 }
 
+func apiAgentsUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+
+	AGENT := r.FormValue("agent")
+	WD := r.FormValue("working")
+	fmt.Println(AGENT)
+	fmt.Println(WD)
+
+	jsond := map[string]interface{}{
+		"status": "Command Updated",
+	}
+
+	jsondata, err := json.Marshal(jsond)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Fprintf(w, string(jsondata))
+	api.UpdateAgentStatus(AGENT, WD)
+}
+
+func apiAgentsCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+
+	AGENT := r.FormValue("agent")
+	WD := r.FormValue("working")
+	fmt.Println(AGENT)
+	fmt.Println(WD)
+
+	jsond := map[string]interface{}{
+		"status": "Command Updated",
+	}
+
+	jsondata, err := json.Marshal(jsond)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Fprintf(w, string(jsondata))
+	api.AgentCreate(AGENT, WD)
+}
+
 func apiCmdUpdateOut(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 	if err := r.ParseForm(); err != nil {
@@ -108,6 +159,7 @@ func apiCmdNew(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	CMD := r.FormValue("cmd")
+	AGENT := r.FormValue("agent")
 	fmt.Println(CMD)
 
 	jsond := map[string]interface{}{
@@ -119,7 +171,7 @@ func apiCmdNew(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Fatalln(err)
 	}
 	fmt.Fprintf(w, string(jsondata))
-	api.NewCMD(CMD)
+	api.NewCMD(CMD, AGENT)
 }
 
 func apiAgents(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -139,6 +191,13 @@ func apiCmds(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func apiCmdsOut(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json")
 	d := api.GetCommandsOut(ps.ByName("id"))
+
+	fmt.Fprintf(w, "%s", string(d))
+}
+
+func apiAgent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json")
+	d := api.GetAgent(ps.ByName("agent"))
 
 	fmt.Fprintf(w, "%s", string(d))
 }
