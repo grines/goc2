@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func main() {
+func Start() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		path, err := os.Getwd()
