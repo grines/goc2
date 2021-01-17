@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -30,6 +31,7 @@ type Command struct {
 //GetSecrets api data
 func GetAgents() []byte {
 	//query := bson.M{}
+	anHourAgo := time.Now().Add(-time.Minute)
 
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
@@ -42,7 +44,7 @@ func GetAgents() []byte {
 
 	// Query All
 	var results []Agent
-	err = c.Find(bson.M{}).All(&results)
+	err = c.Find(bson.M{"checkIn": bson.M{"$gt": anHourAgo}}).All(&results)
 
 	if err != nil {
 		panic(err)
@@ -222,9 +224,10 @@ func NewCMD(cmd string, agent string) {
 
 //NewCMD command read status
 func AgentCreate(agent string, wd string) {
+	timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 	fmt.Println("creating agent")
 	fmt.Println(agent)
-	query := bson.M{"agent": agent, "working": wd, "checkIn": time.Now()}
+	query := bson.M{"agent": agent, "working": wd, "checkIn": timestamp}
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
 		panic(err)

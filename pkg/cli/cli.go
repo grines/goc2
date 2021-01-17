@@ -60,7 +60,7 @@ func getAgents(url string) {
 	}
 
 	for _, d := range results {
-		fmt.Fprintln(os.Stderr, "Agent: "+d.Agent+"\tDir: "+d.Working+"\tSeen: "+d.checkIn.String()+"\n")
+		fmt.Fprintln(os.Stderr, "Active callback: "+d.Agent)
 	}
 }
 
@@ -82,7 +82,7 @@ func Start(agent string, c2 string) {
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			}
-			deadline := time.Now().Add(5 * time.Second)
+			deadline := time.Now().Add(15 * time.Second)
 			for {
 				data := getJSON(c2+"/api/cmd/output/"+agent, c2)
 				if data == "True" || cmdString == "\n" {
