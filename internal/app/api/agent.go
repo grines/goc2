@@ -9,7 +9,6 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/lithammer/shortuuid"
 )
 
 type Agent struct {
@@ -17,6 +16,7 @@ type Agent struct {
 	Agent   string
 	Working string
 	checkIn string
+	Files   string
 }
 
 type Command struct {
@@ -88,7 +88,7 @@ func GetCommands(agent string) []byte {
 	return jsondat
 }
 
-func GetCommandsOut(agent string) []byte {
+func GetCommandsOut(agent string, cmdid string) []byte {
 	//query := bson.M{}
 
 	session, err := mgo.Dial("127.0.0.1")
@@ -102,7 +102,7 @@ func GetCommandsOut(agent string) []byte {
 
 	// Query All
 	var results []Command
-	err = c.Find(bson.M{"agent": agent, "client_status": "0"}).All(&results)
+	err = c.Find(bson.M{"cmdid": cmdid, "agent": agent, "client_status": "0"}).All(&results)
 
 	if err != nil {
 		panic(err)
@@ -118,6 +118,7 @@ func GetCommandsOut(agent string) []byte {
 }
 
 func GetAgent(agent string) []byte {
+	fmt.Println("GetAgent")
 	//query := bson.M{}
 
 	session, err := mgo.Dial("127.0.0.1")
@@ -185,7 +186,7 @@ func UpdateCMDStatusOut(id string) {
 }
 
 //UpdateAgentStatus update agent last checkin and current working directory
-func UpdateAgentStatus(agent string, working string) {
+func UpdateAgentStatus(agent string, working string, files string) {
 	//_id, _ := primitive.ObjectIDFromHex(id)
 	now := time.Now()
 	fmt.Println("Updating")
@@ -200,16 +201,15 @@ func UpdateAgentStatus(agent string, working string) {
 		panic(err)
 	}
 	what := bson.M{"agent": agent}
-	change := bson.M{"$set": bson.M{"working": working, "checkIn": now}}
+	change := bson.M{"$set": bson.M{"files": files, "working": working, "checkIn": now}}
 	c.Update(what, change)
 }
 
 //NewCMD command read status
-func NewCMD(cmd string, agent string) {
-	randid := shortuuid.New()
+func NewCMD(cmd string, agent string, cmdid string) {
 	fmt.Println("sending command")
 	fmt.Println(cmd)
-	query := bson.M{"agent": agent, "cmdid": randid, "status": "0", "client_status": "0", "command": cmd, "timestamp": time.Now()}
+	query := bson.M{"agent": agent, "cmdid": cmdid, "status": "0", "client_status": "0", "command": cmd, "timestamp": time.Now()}
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
 		panic(err)
@@ -223,11 +223,11 @@ func NewCMD(cmd string, agent string) {
 }
 
 //NewCMD command read status
-func AgentCreate(agent string, wd string) {
+func AgentCreate(agent string, wd string, files string) {
 	timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 	fmt.Println("creating agent")
 	fmt.Println(agent)
-	query := bson.M{"agent": agent, "working": wd, "checkIn": timestamp}
+	query := bson.M{"files": files, "agent": agent, "working": wd, "checkIn": timestamp}
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
 		panic(err)

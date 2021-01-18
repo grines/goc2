@@ -35,7 +35,7 @@ func Start() {
 	}
 
 	if cliPtr == true {
-		cli.Start(agentPtr, c2Ptr)
+		cli.Start(c2Ptr)
 	}
 
 }

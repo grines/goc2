@@ -43,7 +43,7 @@ func Start() {
 
 	//commands Endpoints
 	router.GET("/api/cmds/:name", apiCmds)
-	router.GET("/api/cmd/output/:id", apiCmdsOut)
+	router.GET("/api/cmd/output/:agent/:cmdid", apiCmdsOut)
 	router.GET("/cmds/", redirect)
 
 	fmt.Printf("Starting server at port 8005\n")
@@ -90,6 +90,7 @@ func apiAgentsUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	AGENT := r.FormValue("agent")
 	WD := r.FormValue("working")
+	FILES := r.FormValue("files")
 	fmt.Println(AGENT)
 	fmt.Println(WD)
 
@@ -102,7 +103,7 @@ func apiAgentsUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		log.Fatalln(err)
 	}
 	fmt.Fprintf(w, string(jsondata))
-	api.UpdateAgentStatus(AGENT, WD)
+	api.UpdateAgentStatus(AGENT, WD, FILES)
 }
 
 func apiAgentsCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -114,6 +115,7 @@ func apiAgentsCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	AGENT := r.FormValue("agent")
 	WD := r.FormValue("working")
+	FILES := r.FormValue("files")
 	fmt.Println(AGENT)
 	fmt.Println(WD)
 
@@ -126,7 +128,7 @@ func apiAgentsCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		log.Fatalln(err)
 	}
 	fmt.Fprintf(w, string(jsondata))
-	api.AgentCreate(AGENT, WD)
+	api.AgentCreate(AGENT, WD, FILES)
 }
 
 func apiCmdUpdateOut(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -160,10 +162,11 @@ func apiCmdNew(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	CMD := r.FormValue("cmd")
 	AGENT := r.FormValue("agent")
+	CMDID := r.FormValue("cmdid")
 	fmt.Println(CMD)
 
 	jsond := map[string]interface{}{
-		"status": "Command Updated",
+		"cmdid": "Command Updated",
 	}
 
 	jsondata, err := json.Marshal(jsond)
@@ -171,7 +174,7 @@ func apiCmdNew(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Fatalln(err)
 	}
 	fmt.Fprintf(w, string(jsondata))
-	api.NewCMD(CMD, AGENT)
+	api.NewCMD(CMD, AGENT, CMDID)
 }
 
 func apiAgents(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -190,7 +193,7 @@ func apiCmds(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func apiCmdsOut(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json")
-	d := api.GetCommandsOut(ps.ByName("id"))
+	d := api.GetCommandsOut(ps.ByName("agent"), ps.ByName("cmdid"))
 
 	fmt.Fprintf(w, "%s", string(d))
 }
