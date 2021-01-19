@@ -24,7 +24,7 @@ type domainObject struct {
 }
 
 //Start the Web Server
-func Start() {
+func Start(port string) {
 	router := httprouter.New()
 
 	router.ServeFiles("/files/*filepath", http.Dir("/tmp"))
@@ -51,8 +51,8 @@ func Start() {
 	router.GET("/api/cmd/output/:agent/:cmdid", apiCmdsOut)
 	router.GET("/cmds/", redirect)
 
-	fmt.Printf("Starting server at port 8005\n")
-	if err := http.ListenAndServe(":8005", router); err != nil {
+	fmt.Printf("Starting server at port " + port)
+	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err)
 	}
 }

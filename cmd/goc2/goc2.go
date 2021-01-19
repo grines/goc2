@@ -14,6 +14,7 @@ var (
 	listPtr  bool
 	agentPtr string
 	c2Ptr    string
+	portPtr  string
 )
 
 //Start RedMap
@@ -23,6 +24,7 @@ func Start() {
 	flag.BoolVar(&webPtr, "web", false, "Start Web Server")
 	flag.BoolVar(&listPtr, "list", false, "List Connected Agents")
 	flag.StringVar(&agentPtr, "agent", "", "Start Web Server")
+	flag.StringVar(&portPtr, "port", "8005", "Listen Port")
 	flag.StringVar(&c2Ptr, "c2", "", "connect to c2")
 	flag.Parse()
 
@@ -31,7 +33,7 @@ func Start() {
 	}
 
 	if webPtr == true {
-		web.Start()
+		web.Start(portPtr)
 	}
 
 	if cliPtr == true {
