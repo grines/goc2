@@ -1,0 +1,16 @@
+[Unit]
+Description="socat redirector running in a split tmux session"
+Documentation=
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=forking
+User=ubuntu
+Group=ubuntu
+ExecStart=/usr/bin/tmux new -d "sudo socat -d -d -lf /var/log/redirector/http.log TCP4-LISTEN:80,fork,reuseaddr TCP4:go.c2.target:8005" ';' split "sudo socat -d -d -lf /var/log/redirector/https.log TCP4-LISTEN:443,fork,reuseaddr TCP4:go.c2.target:8006"
+KillMode=control-group
+
+[Install]
+
+WantedBy=default.target

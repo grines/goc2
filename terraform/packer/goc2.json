@@ -1,0 +1,48 @@
+{
+    "builders": [
+      {
+        "profile": "hashi-dev",
+        "ami_name": "goc2-server-{{ timestamp }}",
+        "instance_type": "t2.micro",
+        "region": "{{user `region`}}",
+        "source_ami_filter": {
+          "filters": {
+            "name": "ubuntu/images/*ubuntu-bionic-18.04-amd64-server-*",
+            "root-device-type": "ebs",
+            "virtualization-type": "hvm"
+          },
+          "most_recent": true,
+          "owners": [
+            "099720109477"
+          ]
+        },
+        "ssh_username": "ubuntu",
+        "tags": {
+          "OS": "Ubuntu-18.04",
+          "Purpose": "Go C2"
+        },
+        "type": "amazon-ebs"
+      }
+    ],
+    "provisioners": [
+      {
+        "inline": "/usr/bin/cloud-init status --wait",
+        "type": "shell"
+      },
+      {
+        "type": "file",
+        "source": "../build/goc2",
+        "destination": "/home/ubuntu/goc2"
+      },
+      {
+        "type": "shell",
+        "inline": [
+          "sudo apt update",
+          "sudo apt install -y mongodb"
+        ]
+      }
+    ],
+    "variables": {
+      "region": "us-west-2"
+    }
+  }

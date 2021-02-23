@@ -1,0 +1,49 @@
+{
+    "builders": [
+      {
+        "profile": "hashi-dev",
+        "ami_name": "goc2-redirector-{{ timestamp }}",
+        "instance_type": "t2.micro",
+        "region": "{{user `region`}}",
+        "source_ami_filter": {
+          "filters": {
+            "name": "ubuntu/images/*ubuntu-bionic-18.04-amd64-server-*",
+            "root-device-type": "ebs",
+            "virtualization-type": "hvm"
+          },
+          "most_recent": true,
+          "owners": [
+            "099720109477"
+          ]
+        },
+        "ssh_username": "ubuntu",
+        "tags": {
+          "OS": "Ubuntu-18.04",
+          "Purpose": "Go C2 Redirector"
+        },
+        "type": "amazon-ebs"
+      }
+    ],
+    "provisioners": [
+      {
+        "inline": "/usr/bin/cloud-init status --wait",
+        "type": "shell"
+      },
+      {
+        "destination": "/tmp/redirector.service",
+        "source": "configs/redirector.service",
+        "type": "file"
+      },
+      {
+        "type": "shell",
+        "inline": [
+          "sudo cp /tmp/redirector.service /etc/systemd/system/redirector.service",
+          "sudo apt update",
+          "sudo apt install -y socat"
+        ]
+      }
+    ],
+    "variables": {
+      "region": "us-west-2"
+    }
+  }
