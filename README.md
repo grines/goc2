@@ -3,9 +3,31 @@ Simple c2 client/server/paylod
 
 ![](https://github.com/grines/goc2/blob/main/goc2.gif)
 
-# Connect to C2 (run on local pc)
-./goc2 --cli --c2 http://c2.server 
+# GoC2 - MacOS Post Exploitation C2 Framework
 
-# Start C2 Server (Start on aws host: http://c2.server)
-./goc2 --web
-** sudo apt install mongodb * required
+Custom C2 for bypassing EDR and ease of use.
+
+## Next Steps
+- This is still an active work in progress (Not ready for production use)
+
+## Features
+- [X] Command History
+- [X] Remote Command Completion (yes this works!)
+- [X] JXA execution (cocoa api)
+- [X] Clipboard (cocoa api)
+- [X] cat / curl (cocoa api)
+- [ ] add Doom persistence list
+- [ ] Add Slack integration
+- [ ] Add ++ persistence
+- [ ] Add + privesc
+
+## Prereqs (must be in path)
+- install mongodb on c2 server ** sudo apt install mongodb * required
+ 
+## Getting Started (C2 Server)
+- go get github.com/goc2
+- sudo apt install mongodb || brew install mongodb
+- ./goc2 --web
+
+## CLI
+- ./goc2 --cli --c2 http://c2.server 
