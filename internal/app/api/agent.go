@@ -30,7 +30,6 @@ type Command struct {
 
 //GetSecrets api data
 func GetAgents() []byte {
-	//query := bson.M{}
 	anHourAgo := time.Now().Add(-time.Minute)
 
 	session, err := mgo.Dial("127.0.0.1")
