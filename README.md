@@ -1,5 +1,5 @@
 # goc2
-Simple c2 client/server/paylod
+c2 client/server/paylod
 
 ![](https://github.com/grines/goc2/blob/main/goc2.gif)
 
@@ -11,6 +11,7 @@ Custom C2 for bypassing EDR and ease of use.
 - This is still an active work in progress (Not ready for production use)
 
 ## Features
+- [x] Terraform deployment
 - [X] Command History
 - [X] Remote Command Completion (yes this works!)
 - [X] JXA execution (cocoa api)
