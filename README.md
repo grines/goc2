@@ -7,7 +7,7 @@ Simple c2 client/server/paylod
 
 Custom C2 for bypassing EDR and ease of use.
 
-## Next Steps
+## Status
 - This is still an active work in progress (Not ready for production use)
 
 ## Features
