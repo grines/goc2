@@ -21,6 +21,10 @@ Custom C2 for bypassing EDR and ease of use.
 - [ ] Add Slack integration
 - [ ] Add ++ persistence
 - [ ] Add + privesc
+- [ ] Encrytpion
+- [ ] variable callback timeout
+- [ ] Authentication
+- [ ] Custom JXA paylaods storage
 
 ## Prereqs (must be in path)
 - install mongodb on c2 server ** sudo apt install mongodb * required
