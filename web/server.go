@@ -93,15 +93,10 @@ func apiFiles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	tempFile.Write(fileBytes)
 
-	//jsond := map[string]interface{}{
-	//	"file": tempFile,
-	//}
-
-	//jsondata, err := json.Marshal(jsond)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//fmt.Fprintf(w, string(jsondata))
+
 	fmt.Fprintf(w, tempFile.Name())
 }
 
@@ -260,12 +255,6 @@ func apiAgent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func apiTest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json")
-	//fmt.Fprintf(w, "POST request successful")
-	//name := r.FormValue("name")
-	//address := r.FormValue("address")
-
-	//fmt.Fprintf(w, "Name = %s\n", name)
-	//fmt.Fprintf(w, "Address = %s\n", address)
 	json := "{\"status\": \"started\"}"
 	fmt.Fprintf(w, json)
 }

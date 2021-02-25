@@ -371,17 +371,8 @@ func getOutput(url string, c2 string, cmd string) (string, string) {
 		}
 
 		for _, d := range results {
-			//fmt.Println(d.Output)
-			//fmt.Fprintln(os.Stderr, d.Output)
-			//updateCmdStatus(d.Cmdid, c2)
 			return d.Cmdid, d.Output
-			//fmt.Println(d.Cmdid + ": " + d.Output)
-			//updateCmdStatus(d.Cmdid)
 		}
-
-		// Print the HTTP response status.
-		//fmt.Println("Response status:", resp.Status)
-		//return "True"
 	}
 	return "False", "False"
 
