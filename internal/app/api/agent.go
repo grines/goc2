@@ -59,7 +59,6 @@ func GetAgents() []byte {
 }
 
 func GetCommands(agent string) []byte {
-	//query := bson.M{}
 
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
@@ -88,7 +87,6 @@ func GetCommands(agent string) []byte {
 }
 
 func GetCommandsOut(agent string, cmdid string) []byte {
-	//query := bson.M{}
 
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
@@ -117,8 +115,6 @@ func GetCommandsOut(agent string, cmdid string) []byte {
 }
 
 func GetAgent(agent string) []byte {
-	fmt.Println("GetAgent")
-	//query := bson.M{}
 
 	session, err := mgo.Dial("127.0.0.1")
 	if err != nil {
@@ -186,7 +182,6 @@ func UpdateCMDStatusOut(id string) {
 
 //UpdateAgentStatus update agent last checkin and current working directory
 func UpdateAgentStatus(agent string, working string, files string) {
-	//_id, _ := primitive.ObjectIDFromHex(id)
 	now := time.Now()
 	fmt.Println("Updating")
 	fmt.Println(agent)

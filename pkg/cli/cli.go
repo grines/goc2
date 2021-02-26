@@ -410,8 +410,6 @@ func getAgentWorking(url string) (string, error) {
 			fmt.Println(jsonErr)
 		}
 
-		//fmt.Println(results.Working)
-
 		return results.Working, err
 	}
 	return "", err
