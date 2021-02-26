@@ -8,7 +8,7 @@ c2 client/server/paylod
 Custom C2 for bypassing EDR and ease of use.
 
 ## Status
-- This is still an active work in progress (Not ready for production use)
+- This is still an active work in progress (Not ready for production use.. I made it in a weekend.. has bugs.)
 
 ## Features
 - [x] Terraform deployment
@@ -26,7 +26,7 @@ Custom C2 for bypassing EDR and ease of use.
 - [ ] Authentication
 - [ ] Custom JXA paylaods storage
 
-## Prereqs (must be in path)
+## Prereqs
 - install mongodb on c2 server ** sudo apt install mongodb * required
  
 ## Getting Started (C2 Server)
@@ -36,3 +36,8 @@ Custom C2 for bypassing EDR and ease of use.
 
 ## CLI
 - ./goc2 --cli --c2 http://c2.server 
+
+## Payloads
+- grab a goc2-agent macos payload
+- edit c2 ip before compiling
+- ./agent
