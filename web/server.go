@@ -6,7 +6,10 @@ import (
 	"goc2/internal/app/api"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"time"
 
 	//"text/template"
 
@@ -25,6 +28,11 @@ type domainObject struct {
 
 //Start the Web Server
 func Start(port string) {
+	status := rawConnect("127.0.0.1", "27017")
+	if status == false {
+		fmt.Println("Mongo is not running")
+		os.Exit(0)
+	}
 	router := httprouter.New()
 
 	router.ServeFiles("/files/*filepath", http.Dir("/tmp/c2"))
@@ -257,4 +265,19 @@ func apiTest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json")
 	json := "{\"status\": \"started\"}"
 	fmt.Fprintf(w, json)
+}
+
+func rawConnect(host string, port string) bool {
+	timeout := time.Second
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	if err != nil {
+		fmt.Println("Connecting error:", err)
+		return false
+	}
+	if conn != nil {
+		defer conn.Close()
+		fmt.Println("Opened", net.JoinHostPort(host, port))
+		return true
+	}
+	return false
 }
