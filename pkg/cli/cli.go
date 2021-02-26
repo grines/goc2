@@ -301,10 +301,6 @@ func listFiles(c2 string, agent string) func(string) []string {
 // Function constructor - constructs new function for listing given directory
 func listAgents(c2 string) func(string) []string {
 	return func(line string) []string {
-		if agent == "Not Connected" {
-			var a = []string{""}
-			return a
-		}
 		resp, err := http.Get(c2 + "/api/agents")
 		if resp.Status == "200 OK" {
 			if err != nil {
@@ -331,7 +327,9 @@ func listAgents(c2 string) func(string) []string {
 			}
 			return names
 		}
-		return nil
+		var a = []string{""}
+		return a
+
 	}
 }
 
