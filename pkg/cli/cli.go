@@ -148,7 +148,7 @@ func Start(c2 string) {
 		if agent != "Not Connected" {
 			wd, err := getAgentWorking(c2 + "/api/agent/" + agent)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Agent does not exist.")
 				agent = "Not Connected"
 				l.SetPrompt(" <" + blue(agent) + "*> ")
 			} else {
@@ -173,7 +173,11 @@ func Start(c2 string) {
 		switch {
 		case strings.HasPrefix(line, "agent "):
 			parts := strings.Split(line, " ")
-			agent = parts[1]
+			if len(parts) == 2 {
+				agent = parts[1]
+			} else {
+				agent = "Not Connected"
+			}
 		case line == "login":
 			pswd, err := l.ReadPassword("please enter your password: ")
 			if err != nil {
@@ -193,16 +197,18 @@ func Start(c2 string) {
 			time.Sleep(4 * time.Second)
 		case line == "":
 		default:
+			if agent == "Not Connected" {
+				fmt.Println("You are not connected to an agent.")
+				break
+			}
 			cmdString := line
 			if cmdString == "exit" {
 				os.Exit(1)
 			}
 
 			if strings.Contains(cmdString, "upload ") {
-				//uuid := shortuuid.New()
 				parts := strings.Split(cmdString, " ")
 				file := parts[1]
-				//copy(file, "/tmp/"+uuid)
 				tempfile := uploadFile(file, c2)
 				if tempfile == "NotFound" {
 					fmt.Println("File not found")
