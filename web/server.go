@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"goc2/internal/app/api"
 	"io/ioutil"
 	"log"
 	"net"
@@ -11,9 +10,8 @@ import (
 	"os"
 	"time"
 
-	//"text/template"
-
 	"github.com/globalsign/mgo/bson"
+	"github.com/grines/goc2/internal/app/api"
 	"github.com/julienschmidt/httprouter"
 )
 

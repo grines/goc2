@@ -2,12 +2,9 @@ package goc2
 
 import (
 	"flag"
-	//"fmt"
-	//"os"
-	"goc2/pkg/cli"
-	"goc2/web"
+	"github.com/grines/goc2/pkg/cli"
+	"github.com/grines/goc2/web"
 )
-
 var (
 	cliPtr   bool
 	webPtr   bool
