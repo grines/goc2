@@ -33,7 +33,7 @@ func Start(port string) {
 	}
 	router := httprouter.New()
 
-	router.ServeFiles("/files/*filepath", http.Dir("/tmp/c2"))
+	router.ServeFiles("/files/*filepath", http.Dir("/tmp/bin"))
 
 	//Main Entry
 	router.POST("/api/cmd/files", apiFiles)
